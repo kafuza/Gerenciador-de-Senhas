@@ -152,12 +152,6 @@ Edite `package.json`:
 2. Adicione um arquivo `icon.png` (512x512 pixels)
 3. O ícone será usado automaticamente
 
-### Mudar as Cores
-
-Edite `index.html` e procure por:
-- `bg="#667eea"` - Cor de fundo
-- `bg-purple-600` - Cor dos botões
-
 ## 🚀 Distribuir o App
 
 ### Opção 1: Enviar o executável
