@@ -79,7 +79,8 @@ electron-password-manager/
 ```
 
 ## ✨ Funcionalidades
-
+- 🌙 **Modo Escuro (Customizado):** Botão de alternância de tema para melhor usabilidade noturna.
+- 🎨 **Interface Personalizada:** Cores ajustadas manualmente para um design moderno e limpo.
 - ✅ Interface moderna com React
 - ✅ Adicionar, editar e deletar senhas
 - ✅ Gerador de senhas fortes (16 caracteres)
@@ -97,6 +98,15 @@ electron-password-manager/
 - **Tailwind CSS** - Framework CSS
 - **Font Awesome** - Ícones
 - **JavaScript** - Lógica
+
+## 🤖 Desenvolvimento e IA
+
+Este projeto foi desenvolvido utilizando uma abordagem de **Prompt Engineering** com auxílio do **Claude (Anthropic)**. 
+
+Embora a estrutura base tenha sido gerada por IA, realizei intervenções manuais críticas para personalizar a experiência:
+- **Implementação de Feature:** Projetei e orientei a implementação de um sistema de alternância de tema (Modo Escuro/Claro) que não constava no escopo inicial.
+- **Refatoração de UI:** Realizei o ajuste fino da paleta de cores e estilização via Tailwind CSS para garantir uma identidade visual única e maior conforto visual.
+- **Curadoria de Código:** Revisão da lógica de persistência de dados e estrutura de pastas.
 
 ## 🎯 Vantagens do Electron
 
