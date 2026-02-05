@@ -232,15 +232,7 @@ MIT - Livre para uso pessoal e comercial
 
 ---
 
-## 🎉 Apps Famosos Feitos com Electron
-
-- **VS Code** - Editor da Microsoft
-- **Slack** - Comunicação de equipes
-- **Discord** - Chat para gamers
-- **Figma** - Design UI/UX
-- **WhatsApp Desktop** - Mensagens
-
-Você está usando a mesma tecnologia! 🚀
+🚀
 
 ---
 
