@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; font-src 'self' https://cdnjs.cloudflare.com;">
+    <title>Gerenciador de Senhas</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+       
+       /*Fonte*/
+       * {
+            font-family: 'Google+Sans', sans-serif;
+        }
+
+        /* Estilos base*/
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        /*Light Mode (padrao)*/
+
+        body.light-mode {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /*Dark Mode*/
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+        #root {
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        /* Transicoes suaves*/
+
+        .theme-transition {
+            transition: all 0.3s ease;
+        }
+        
+        /*Animacao do botao de tema*/
+
+        .theme-toggle {
+            transition: all 0.3s ease;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class=" light-mode">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        function PasswordManager() {
+            const [passwords, setPasswords] = useState([]);
+            const [showForm, setShowForm] = useState(false);
+            const [editingId, setEditingId] = useState(null);
+            const [formData, setFormData] = useState({
+                service: '',
+                username: '',
+                password: ''
+            });
+            const [searchTerm, setSearchTerm] = useState('');
+            const [visiblePasswords, setVisiblePasswords] = useState({});
+            const [darkMode, setDarkMode] = useState(false);
+
+
+            // Carregar senhas e tema do localStorage
+            useEffect(() => {
+                const stored = localStorage.getItem('passwords');
+                if (stored) {
+                    setPasswords(JSON.parse(stored));
+                }
+
+                const savedTheme = localStorage.getItem('darkMode');
+                if (savedTheme ==='true') {
+                    setDarkMode(true);
+                    document.body.classList.add('dark-mode');
+                    document.body.classList.remove('light-mode');
+                }
+            }, []);
+            // Alternar tema
+            const toggleDarkMode = () => {
+                const newDarkMode = !darkMode;
+                setDarkMode(newDarkMode);
+            
+            //Salvar preferencia
+            localStorage.setItem('darkMode', newDarkMode);
+
+            //Aplicar tema
+            if(newDarkMode){
+                document.body.classList.add('dark-mode');
+                document.body.classList.remove('light-mode');
+            } else {
+                document.body.classList.add('light-mode');
+                document.body.classList.remove('dark-mode');
+            }
+        }
+            // Salvar no localStorage
+            const saveToStorage = (data) => {
+                localStorage.setItem('passwords', JSON.stringify(data));
+            };
+
+            // Gerar senha forte
+            const generatePassword = () => {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+                let password = '';
+                for (let i = 0; i < 16; i++) {
+                    password += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                setFormData({ ...formData, password });
+            };
+
+            // Adicionar ou editar senha
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                
+                if (!formData.service || !formData.username || !formData.password) {
+                    alert('Por favor, preencha todos os campos!');
+                    return;
+                }
+
+                let updatedPasswords;
+                
+                if (editingId) {
+                    updatedPasswords = passwords.map(p => 
+                        p.id === editingId ? { ...formData, id: editingId } : p
+                    );
+                } else {
+                    const newPassword = {
+                        ...formData,
+                        id: Date.now()
+                    };
+                    updatedPasswords = [...passwords, newPassword];
+                }
+
+                setPasswords(updatedPasswords);
+                saveToStorage(updatedPasswords);
+                resetForm();
+            };
+
+            // Deletar senha
+            const handleDelete = (id) => {
+                if (confirm('Tem certeza que deseja excluir esta senha?')) {
+                    const updatedPasswords = passwords.filter(p => p.id !== id);
+                    setPasswords(updatedPasswords);
+                    saveToStorage(updatedPasswords);
+                }
+            };
+
+            // Editar senha
+            const handleEdit = (password) => {
+                setFormData({
+                    service: password.service,
+                    username: password.username,
+                    password: password.password
+                });
+                setEditingId(password.id);
+                setShowForm(true);
+            };
+
+            // Resetar formulário
+            const resetForm = () => {
+                setFormData({ service: '', username: '', password: '' });
+                setEditingId(null);
+                setShowForm(false);
+            };
+
+            // Toggle visibilidade da senha
+            const togglePasswordVisibility = (id) => {
+                setVisiblePasswords({
+                    ...visiblePasswords,
+                    [id]: !visiblePasswords[id]
+                });
+            };
+
+            // Copiar senha
+            const copyPassword = (password) => {
+                navigator.clipboard.writeText(password);
+                alert('Senha copiada!');
+            };
+
+            // Filtrar senhas
+            const filteredPasswords = passwords.filter(p =>
+                p.service.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.username.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            // Classe dinamica baseada no tema
+            const cardBg = darkMode ? 'bg-slate-500' : 'bg-white';
+            const textPrimary = darkMode ? 'text-gray-800' : 'text-gray-800';
+            const textSecondary = darkMode ? 'text-gray-300' : 'text-gray-600';
+            const textMuted = darkMode ? 'text-gray-400' : 'text-gray-500';
+            const inputBg = darkMode ? 'bg-gray-700 text-white border-gray-600' : 'bg-white-border-gray-300';
+            const hoverCard = darkMode ? 'hover:bg-gray-750' : 'hover:shadow-lg';
+
+            return (
+                <div className="min-h-screen py-8 px-4">
+                    <div className="max-w-4xl mx-auto">
+                        {/* Header */}
+                        <div className={`${cardBg} rounded-lg shadow-xl p-6 mb-6 theme-transition`}>
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <i className={`fas fa-lock ${darkMode ? 'text-black' : 'text-bg-black'} text-3xl`}></i>
+                                    <div>
+                                        <h1 className="text-3xl font-bold text-gray-800">Gerenciador de Senhas</h1>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                     {/*Botão Dark Mode*/}
+                                     <button
+                                        onClick={toggleDarkMode}
+                                        className={`theme-toggle ${darkMode ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-gray-700 hover:bg-gray-800'} text-white p-3 rounded-lg transition-all`}
+                                        title={darkMode ? 'Modo Claro': 'Modo Escuro'}
+                                > 
+                                <i className={`fas ${darkMode ? 'fa-sun' : 'fa-moon'} text-xl`}></i>
+                                </button>
+                                {/*Botao nova senha*/}
+                                <button
+                                    onClick={() => setShowForm(!showForm)}
+                                    className={`${darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-neutral-600 hover:bg-neutral-500'} text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2`}
+                                >
+                                    <i className={`fas ${showForm ? 'fa-times' : 'fa-plus'}`}></i>
+                                    {showForm ? 'Cancelar' : 'Nova Senha'}
+                                </button>
+                            </div>
+                        </div>
+
+                            {/* Busca */}
+                            <div className="relative">
+                                <i className={`fas fa-search absolute left-3 top-3 ${textMuted}`}></i>
+                                <input
+                                    type="text"
+                                    placeholder="Buscar por serviço ou usuário..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className={`w-full pl-10 pr-4 py-2 border ${inputBg} rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent theme-transition`}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Formulário */}
+                        {showForm && (
+                            <div className={`${cardBg} rounded-lg shadow-x1 p-6 mb-6 theme-transition`}>
+                                <h2 className={`text-xl font-bold text-gray-800 mb-4`}>
+                                    {editingId ? 'Editar Senha' : 'Adicionar Nova Senha'}
+                                </h2>
+                                <form onSubmit={handleSubmit} className="space-y-4">
+                                    <div>
+                                        <label className={`block text-sm font-medium ${textSecondary} mb-1`}>
+                                            Serviço/Site
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.service}
+                                            onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                                            className={`w-full px-4 py-2 border ${inputBg} rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent`}
+                                            placeholder="Ex: Gmail, Facebook, Netflix"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={`block text-sm font-medium ${textSecondary} mb-1`}>
+                                            Usuário/Email
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.username}
+                                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                                            className={`w-full px-4 py-2 border ${inputBg} rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent`}
+                                            placeholder="Ex: usuario@email.com"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className={`block text-sm font-medium ${textSecondary} mb-1`}>
+                                            Senha
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={formData.password}
+                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                className={`flex-1 px-4 py-2 border ${inputBg} rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent`}
+                                                placeholder="Digite ou gere uma senha"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={generatePassword}
+                                                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                                            >
+                                                <i className="fas fa-random"></i>
+                                                Gerar
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                            type="submit"
+                                            className={`flex-1 ${darkMode ? 'bg-gray-600 hover:bg-gray-700' :  'bg-neutral-600 hover:bg-neutral-500'} text-white py-2 rounded-lg transition-colors font-medium`}
+                                        >
+                                            {editingId ? 'Salvar Alterações' : 'Adicionar Senha'}
+                                        </button>
+                                        {editingId && (
+                                            <button
+                                                type="button"
+                                                onClick={resetForm}
+                                                className={`px-6 ${darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-neutral-600 hover:bg-neutral-500'} ${darkMode ? 'text-white' : 'text-white'} py-2 rounded-lg transition-colors`}
+                                            >
+                                                Cancelar
+                                            </button>
+                                        )}
+                                    </div>
+                                </form>
+                            </div>
+                        )}
+
+                        {/* Lista de Senhas */}
+                        <div className="space-y-3">
+                            {filteredPasswords.length === 0 ? (
+                                <div className={`${cardBg} rounded-lg shadow-xl p-12 text-center theme-transition`}>
+                                    <i className={`fas fa-key ${darkMode ? 'text-gray-600' : 'text-gray-300'} text-6xl mb-4`}></i>
+                                    <p className={`${textMuted}} text-lg`}>
+                                        {searchTerm ? 'Nenhuma senha encontrada' : 'Nenhuma senha salva ainda'}
+                                    </p>
+                                    {!searchTerm && (
+                                        <p className={`${darkMode ? 'text-gray-500' : 'text-gray-400'} mt-2`}>
+                                            Clique em "Nova Senha" para começar
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                filteredPasswords.map((item) => (
+                                    <div key={item.id} className={`${cardBg} rounded-lg shadow-md p-5 transition-all ${hoverCard} theme-transition`}>
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex-1">
+                                                <h3 className={`text-lg font-bold ${textPrimary} mb-1`}>
+                                                    {item.service}
+                                                </h3>
+                                                <p className={`${textSecondary}-sm mb-2`}>
+                                                    <i className="fas fa-user mr-2"></i>
+                                                    {item.username}
+                                                </p>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type={visiblePasswords[item.id] ? 'text' : 'password'}
+                                                        value={item.password}
+                                                        readOnly
+                                                        className={`${darkMode ? 'bg-gray-700 text-gray-200' : 'bg-gray-100'} px-3 py-1 rounded text-sm font-mono flex-1 theme-transition`}
+                                                    />
+                                                    <button
+                                                        onClick={() => togglePasswordVisibility(item.id)}
+                                                        className={`${textSecondary} hover:text-purple-600 px-3 py-1 transition-colors`}
+                                                        title={visiblePasswords[item.id] ? 'Ocultar' : 'Mostrar'}
+                                                    >
+                                                        <i className={`fas ${visiblePasswords[item.id] ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => copyPassword(item.password)}
+                                                        className={`${textSecondary} hover:text-purple-600 px-3 py-1 transitions-colors`}
+                                                        title="Copiar senha"
+                                                    >
+                                                        <i className="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 ml-4">
+                                                <button
+                                                    onClick={() => handleEdit(item)}
+                                                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                                                    title="Editar"
+                                                >
+                                                    <i className="fas fa-edit"></i>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(item.id)}
+                                                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+                                                    title="Excluir"
+                                                >
+                                                    <i className="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="text-center mt-8 text-white text-sm">
+                            <p>🔒 Dados armazenados localmente</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<PasswordManager />, document.getElementById('root'));
+    </script>
+</body>
+</html>
